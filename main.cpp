@@ -38,21 +38,25 @@ int main(int ac, char *av[])
                 cout << "Cannot wait thread " << i << endl;
         }
 
+//        for(i = 0; i < p; i++)
+//            args[i].print();
+
         for(i = 0; i < p; i++)
         {
             if(args[i].status != io_status::none)
+            {
+                delete[] threads;
+                delete[] args;
                 return -1;
+            }
         }
-
-//        for(i = 0; i < p; i++)
-//            args[i].print();
 
         int global_answer = 0;
 
         for(i = 0; i < p; i++)
             global_answer += args[i].local_answer;
 
-        cout << "ANSWER: " << global_answer << endl;
+        cout << "RESULT: " << global_answer << endl;
 
         delete[] threads;
         delete[] args;

@@ -50,7 +50,7 @@ void reduce_sum(int p, double* a, int n)
     pthread_mutex_unlock(&m);
 }
 
-void remember_elements(ARGS *arg)
+void file_check(ARGS *arg)
 {
     FILE *f;
 
@@ -62,29 +62,49 @@ void remember_elements(ARGS *arg)
         return;
     }
 
-    if(fscanf(f, "%lf", &(arg->first)) == -1)
+    double current = 0;
+    int count = 0;
+    while(fscanf(f, "%lf", &current) == 1)
+        count++;
+
+    arg->count = count;
+
+    if(fscanf(f, "%lf", &current) != EOF)
     {
-        arg->type = type_inf::empty;
+        cout << "Wrong input data in " << arg->filename << endl;
+        arg->status = io_status::error_read;
         fclose(f);
         return;
     }
+
+    fclose(f);
+    return;
+}
+
+void remember_elements(ARGS *arg)
+{
+    if(arg->count == 0) return;
+
+    FILE *f;
+
+    f = fopen(arg->filename, "r");
+    if(!f)
+    {
+        cout << "Can't open the file " << arg->filename << endl;
+        arg->status = io_status::error_open;
+        return;
+    }
+
+    if(fscanf(f, "%lf", &(arg->first)) == -1) {
+        arg->status = io_status::error_read;
+        fclose(f);
+        return;
+    }
+
+    if(arg->count == 1) return;
 
     if(fscanf(f, "%lf", &(arg->second)) == -1)
     {
-        arg->type = type_inf::one;
-        fclose(f);
-        return;
-    }
-
-    arg->type = type_inf::many;
-    
-    double helper = 0;
-    while(fscanf(f, "%lf", &helper) == 0)
-        helper = 0;
-
-    if(fscanf(f, "%lf", &helper) != EOF)
-    {
-        cout << "Wrong input data in " << arg->filename << endl;
         arg->status = io_status::error_read;
         fclose(f);
         return;
@@ -96,37 +116,59 @@ void remember_elements(ARGS *arg)
 void arrange_elements(ARGS *arg)
 {
     //Empty file
-    if(arg->type == type_inf::empty)
+    if(arg->count == 0)
     {
         int i = 1;
-        while(i < arg->p and (arg + i)->type == type_inf::empty)
+        while(i < arg->p and (arg + i)->count == 0)
             i++;
+
+        if(i == arg->p)
+        {
+            arg->is_last = true;
+            return;
+        }
 
         arg->first = (arg + i)->first;
 
         //Second element
-        if((arg + i)->type == type_inf::many)
+        if((arg + i)->count >= 2)
         {
             arg->second = (arg + i)->second;
         } else
         {
             i++;
 
-            while(i < arg->p and (arg + i)->type == type_inf::empty)
+            if(i == arg->p)
+            {
+                arg->is_last = true;
+                return;
+            }
+
+            while(i < arg->p and (arg + i)->count == 0)
                 i++;
 
-            if(i > arg->p) return;
+            if(i == arg->p)
+            {
+                arg->is_last = true;
+                return;
+            }
 
             arg->second = (arg + i)->first;
         }
     }
 
-    //Second element
-    if(arg->type == type_inf::one)
+    //One element file
+    if(arg->count == 1)
     {
         int i = 1;
-        while(i < arg->p and (arg + i)->type != type_inf::many)
+        while(i < arg->p and (arg + i)->count == 0)
             i++;
+
+        if(i == arg->p)
+        {
+            arg->is_last = true;
+            return;
+        }
 
         arg->second = (arg + i)->first;
     }
@@ -134,7 +176,7 @@ void arrange_elements(ARGS *arg)
 
 void fibonacci(ARGS *arg)
 {
-    if(arg->type == type_inf::empty) return;
+    if(arg->count == 0) return;
 
     FILE *f;
 
@@ -148,12 +190,19 @@ void fibonacci(ARGS *arg)
 
     double x1, x2, x3, max = -1.7976931348623158e+308;
 
-    if(arg->type == type_inf::one)
+    if(arg->count == 1)
     {
-        if(arg->m == arg->p - 1) return;
+        if(arg->is_last) return;
 
-        if(abs(arg->first + (arg + 1)->first - (arg + 1)->second) < 1e-16)
-            arg->local_max = arg->first;
+        if(abs(arg->first + (arg + 1)->first - (arg + 1)->second) < eps)
+        {
+            if(arg->first >= (arg + 1)->first and arg->first >= (arg + 1)->second)
+                arg->local_max = arg->first;
+            else if((arg + 1)->first >= arg->first and (arg + 1)->first >= (arg + 1)->second)
+                arg->local_max = (arg + 1)->first;
+            else if((arg + 1)->second >= (arg + 1)->first and (arg + 1)->second >= arg->first)
+                arg->local_max = (arg + 1)->second;
+        }
 
         return;
     }
@@ -171,7 +220,7 @@ void fibonacci(ARGS *arg)
         return;
     }
 
-    while (fscanf(f, "%lf", &x3) != -1)
+    while (fscanf(f, "%lf", &x3) == 1)
     {
         if(abs(x1 + x2 - x3) < eps)
         {
@@ -187,7 +236,11 @@ void fibonacci(ARGS *arg)
         x2 = x3;
     }
 
-    if(arg->m == arg->p - 1) return;
+    if(arg->is_last)
+    {
+        arg->local_max = max;
+        return;
+    }
 
     if(abs(x2 - (arg + 1)->first + x1) < eps)
     {
@@ -203,21 +256,12 @@ void fibonacci(ARGS *arg)
             max = x2;
     }
 
-    double helper;
-    if(fscanf(f, "%lf", &helper) != EOF)
-    {
-        cout << "Wrong input data in " << arg->filename << endl;
-        arg->status = io_status::error_read;
-        fclose(f);
-        return;
-    }
-
     arg->local_max = max;
 }
 
 void glob_max(ARGS *arg)
 {
-    if(arg->type == type_inf::empty) return;
+    if(arg->count == 0) return;
 
     double max = arg->local_max;
     for(int i = -arg->m; i < arg->p - arg->m; i++)
@@ -231,7 +275,7 @@ void glob_max(ARGS *arg)
 
 void loc_ans(ARGS *arg)
 {
-    if(arg->type == type_inf::empty) return;
+    if(arg->count == 0) return;
 
     FILE *f;
 
@@ -245,19 +289,10 @@ void loc_ans(ARGS *arg)
 
     double current;
 
-    while(fscanf(f, "%lf", &current) != -1)
+    while(fscanf(f, "%lf", &current) == 1)
     {
         if(current > arg->global_max)
             arg->local_answer++;
-    }
-
-    double helper;
-    if(fscanf(f, "%lf", &helper) != EOF)
-    {
-        cout << "Wrong input data in " << arg->filename << endl;
-        arg->status = io_status::error_read;
-        fclose(f);
-        return;
     }
 
     fclose(f);
@@ -268,15 +303,22 @@ void *process_main(void *args)
     ARGS *arg = (ARGS*)args;
     int i, p = arg->p;
 
-    remember_elements(arg);
+    file_check(arg);
     reduce_sum(p);
 
+    int global_count = 0;
     for(i = -arg->m; i < p - arg->m; i++)
     {
-        cout << "p";
         if((arg + i)->status == io_status::error_open or (arg + i)->status == io_status::error_read)
             return 0;
+
+        global_count += (arg + i)->count;
     }
+
+    if(global_count < 3) return 0;
+
+    remember_elements(arg);
+    reduce_sum(p);
 
     arrange_elements(arg);
     reduce_sum(p);
@@ -287,7 +329,7 @@ void *process_main(void *args)
     for(i = -arg->m; i < p - arg->m; i++)
     {
         if((arg + i)->status == io_status::error_open or (arg + i)->status == io_status::error_read)
-            return 0;
+            return nullptr;
     }
 
     glob_max(arg);

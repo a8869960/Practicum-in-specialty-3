@@ -14,14 +14,6 @@ enum class io_status
     none
 };
 
-enum class type_inf
-{
-    empty,
-    one,
-    many,
-    unknown
-};
-
 class ARGS
 {
 public:
@@ -32,10 +24,10 @@ public:
 
     double first = 0;
     double second = 0;
-    double prelast = 0;
-    double last = 0;
 
-    type_inf type = type_inf::unknown;
+    bool is_last = false;
+
+    int count = 0;
 
     double local_max = -1.7976931348623158e+308;
     double global_max = 0;
@@ -48,27 +40,10 @@ public:
         cout << "filename  | " << filename << endl;
         cout << "loc ans   | " << local_answer << endl;
         cout << "local max | " << local_max << endl;
+        cout << "glob max  | " << global_max << endl;
         cout << "first     | " << first << endl;
         cout << "second    | " << second << endl;
-        cout << "type      | ";
-        switch (type)
-        {
-            case type_inf::unknown:
-                cout << "unknown" << endl;
-                break;
-
-            case type_inf::empty:
-                cout << "empty" << endl;
-                break;
-
-            case type_inf::one:
-                cout << "one" << endl;
-                break;
-
-            case type_inf::many:
-                cout << "many" << endl;
-                break;
-        }
+        cout << "count     | " << count << endl;
         cout << "status    | ";
         switch (status)
         {

@@ -38,8 +38,8 @@ int main(int ac, char *av[])
                 cout << "Cannot wait thread " << i << endl;
         }
 
-//        for(i = 0; i < p; i++)
-//            args[i].print();
+        // for(i = 0; i < p; i++)
+            // args[i].print();
 
         for(i = 0; i < p; i++)
         {

@@ -63,6 +63,11 @@ public:
                 cout << "none" << endl;
                 break;
         }
+        cout << "is last   |";
+        if(is_last)
+            cout << "true" << endl;
+        else
+            cout << "false" << endl;
         cout << endl;
     }
 };

@@ -78,6 +78,10 @@ void file_check(ARGS *arg)
     }
 
     fclose(f);
+
+    if(arg->m == arg->p - 1)
+        arg->is_last = true;
+
     return;
 }
 
@@ -236,7 +240,7 @@ void fibonacci(ARGS *arg)
         x2 = x3;
     }
 
-    if(arg->is_last)
+    if(arg->is_last or arg->m == arg->p - 1)
     {
         arg->local_max = max;
         return;

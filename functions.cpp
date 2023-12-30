@@ -174,7 +174,10 @@ void arrange_elements(ARGS *arg)
             return;
         }
 
-        arg->second = (arg + i)->first;
+        if(arg->m == arg->p - 1)
+            arg->second = -1.7976931348623158e+308;
+        else
+            arg->second = (arg + i)->first;
     }
 }
 
@@ -198,7 +201,9 @@ void fibonacci(ARGS *arg)
     {
         if(arg->is_last) return;
 
-        if(abs(arg->first + (arg + 1)->first - (arg + 1)->second) < eps)
+//        cout << arg->first << " " << (arg + 1)->first << " " << (arg + 1)->second << " " << arg->filename << endl;
+//        if(arg->m == arg->p -2) cout << (arg + 1)->second << " " << arg->filename << endl;
+        if(fabs(arg->first + (arg + 1)->first - (arg + 1)->second) < eps)
         {
             if(arg->first >= (arg + 1)->first and arg->first >= (arg + 1)->second)
                 arg->local_max = arg->first;

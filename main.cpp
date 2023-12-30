@@ -3,6 +3,9 @@
 //
 #include "functions.h"
 
+#include <signal.h>
+#include <stdio.h>
+
 int main(int ac, char *av[])
 {
     try
